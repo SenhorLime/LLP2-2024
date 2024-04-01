@@ -5,6 +5,26 @@ import java.util.Scanner;
 import Utils.FileManager;
 
 public class Main {
+    private static void putInArray(List<Funcionario> funcionariosList) {
+        List<String> dadosArquivo = FileManager.loadFile("pessoal.csv");
+
+        for (String dado : dadosArquivo) {
+            String[] dadoSeparado = dado.split(";", -1);
+
+            if (dadoSeparado[4].equals("Geral")) {
+                funcionariosList.add(new Administrativo(dadoSeparado));
+            }
+
+            if (dadoSeparado[4].equals("Docente")) {
+                funcionariosList.add(new Docente(dadoSeparado));
+            }
+
+            if (dadoSeparado[4].equals("Discente")) {
+                funcionariosList.add(new Discente(dadoSeparado));
+            }
+        }
+    }
+
     public static void main(String[] args) {
         boolean confirmarInserindo = true;
         Scanner scanner = new Scanner(System.in);
@@ -12,7 +32,7 @@ public class Main {
 
         while (confirmarInserindo) {
             System.out.println("Selecione o dado que deseja inserir: ");
-            System.out.println(" 1. Funcionario \n 2. Discente \n 3.Administrativo \n 4.Docente");
+            System.out.println(" 1. Funcionario \n 2. Discente \n 3. Administrativo \n 4. Docente");
             System.out.print("Qual opção quer inserir: ");
             int escolha = scanner.nextInt();
 
@@ -41,7 +61,7 @@ public class Main {
                     break;
                 case 3:
                     System.out.print("Digite o cargo: ");
-                    int setor = scanner.nextInt();
+                    String setor = scanner.nextLine();
 
                     Administrativo administrativo = new Administrativo(nome, email, senha, cargo, setor);
                     funcionarios.add(administrativo);
@@ -54,31 +74,30 @@ public class Main {
                     break;
             }
 
-            System.out.println("Deseja confirmar inserindo dados? (1 - Sim | 2 - Não) ");
-            int confirmar = scanner.nextInt();
-            if (confirmar == 1) {
+            System.out.println("Deseja continuar inserindo dados? (1 - Sim | 2 - Não) ");
+            escolha = scanner.nextInt();
+            if (escolha == 1) {
                 confirmarInserindo = true;
-            } else if (confirmar == 2) {
+            } else if (escolha == 2) {
                 confirmarInserindo = false;
             }
 
             System.out.println("Deseja inserir dados do arquivo? (1 - Sim | 2 - Não) ");
-            confirmar = scanner.nextInt();
-            if (confirmar == 1) {
-                List<String> dadosArquivo = FileManager.loadFile("pessoal.csv");
-
-                for (String dado : dadosArquivo) {
-                    String[] dadoSeparado = dado.split(";", -1);
-                    
-                    if (dadoSeparado[4].equals("Geral")) {
-                        funcionarios.add(new Funcionario(dadoSeparado));
-                    }
-
-                }
-
-            } else if (confirmar == 2) {
+            escolha = scanner.nextInt();
+            if (escolha == 1) {
+                putInArray(funcionarios);
+            } else if (escolha == 2) {
                 confirmarInserindo = false;
             }
+
+            System.out.print("\033[H\033[2J");
+            System.out.flush();
         }
+
+        for (Funcionario funcionario : funcionarios) {
+            System.out.println(funcionario);
+        }
+
+        scanner.close();
     }
 }

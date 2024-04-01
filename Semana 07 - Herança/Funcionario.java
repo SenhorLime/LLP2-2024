@@ -20,7 +20,6 @@ public class Funcionario {
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
         return nome + ',' + email + ',' + this.escondeSenha() + ',' + cargo;
     }
 

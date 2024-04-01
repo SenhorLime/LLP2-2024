@@ -1,7 +1,11 @@
 public class Discente extends Funcionario {
     private String turma;
 
-    
+    public Discente(String[] dados) {
+        super(dados);
+        this.turma = dados[5];
+    }
+
     public Discente(String nome, String email, String senha, String cargo, String turma) {
         super(nome, email, senha, cargo);
         this.turma = turma;
@@ -13,7 +17,6 @@ public class Discente extends Funcionario {
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
         return super.toString() + ',' + getTurma();
     }
 }

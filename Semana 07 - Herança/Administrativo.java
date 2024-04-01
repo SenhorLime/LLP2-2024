@@ -1,18 +1,22 @@
 public class Administrativo extends Funcionario {
-    private int setor;
+    private String setor;
 
-    public Administrativo(String nome, String email, String senha, String cargo, int setor) {
+    public Administrativo(String[] dados) {
+        super(dados);
+        this.setor = dados[6];
+    }
+
+    public Administrativo(String nome, String email, String senha, String cargo, String setor) {
         super(nome, email, senha, cargo);
         this.setor = setor;
     }
 
-    public int getSetor() {
+    public String getSetor() {
         return setor;
     }
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
         return super.toString() + ',' + getSetor();
     }
 }
