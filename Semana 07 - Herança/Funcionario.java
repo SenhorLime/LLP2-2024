@@ -4,7 +4,7 @@ public class Funcionario {
     protected String senha;
     protected String cargo;
 
-    public Funcionario (String[] dados) {
+    public Funcionario(String[] dados) {
         this.nome = dados[1];
         this.email = dados[2];
         this.senha = dados[3];
@@ -26,8 +26,8 @@ public class Funcionario {
     private String escondeSenha() {
         String senhaEscondida = "";
 
-        for (char caracter : senha.toCharArray()) {
-            senhaEscondida += caracter;
+        for (int i = 0; i < senha.length(); i++) {
+            senhaEscondida += "*";
         }
 
         return senhaEscondida;
