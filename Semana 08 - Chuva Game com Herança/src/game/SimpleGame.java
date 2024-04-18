@@ -12,15 +12,17 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
 import game.Characters.*;
+import game.Utils.ScoreSaver;
 
 public class SimpleGame extends ApplicationAdapter {
 	private Bucket balde;
+	private Cloud nuvem;
 	private Array<Anvil> bigornas = new Array<Anvil>();
 	private Array<RainDrop> rainDrops = new Array<RainDrop>();
 
@@ -28,20 +30,23 @@ public class SimpleGame extends ApplicationAdapter {
 	private Texture anvilImage;
 	// private Texture bucketImage;
 	private Sound dropSound;
+	private Sound anvilSound;
 	private Music rainMusic;
 	private SpriteBatch batch;
 	private OrthographicCamera camera;
-	private Rectangle bucket;
+	// private Rectangle bucket;
 	// private Array<Rectangle> raindrops;
 	private long lastDropTime;
 	private long lastAnvilTime;
 
 	private BitmapFont font;
 	int pontuacao = 0;
+	private int highScore = ScoreSaver.getHighScore();
 
 	@Override
 	public void create() {
 		balde = new Bucket("assets/bucket.png");
+		nuvem = new Cloud("assets/cloud.png");
 
 		// load the images for the droplet and the bucket, 64x64 pixels each
 		dropImage = new Texture((Gdx.files.internal("assets/droplet.png")));
@@ -51,6 +56,7 @@ public class SimpleGame extends ApplicationAdapter {
 
 		// load the drop sound effect and the rain background "music"
 		dropSound = Gdx.audio.newSound(Gdx.files.internal("assets/drop.wav"));
+		anvilSound = Gdx.audio.newSound(Gdx.files.internal("assets/anvilSound.wav"));
 		rainMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/rain.mp3"));
 
 		// start the playback of the background music immediately
@@ -62,12 +68,13 @@ public class SimpleGame extends ApplicationAdapter {
 		camera.setToOrtho(false, 800, 480);
 		batch = new SpriteBatch();
 
-		// create a Rectangle to logically represent the bucket
-		bucket = new Rectangle();
-		bucket.x = 800 / 2 - 64 / 2; // center the bucket horizontally
-		bucket.y = 20; // bottom left corner of the bucket is 20 pixels above the bottom screen edge
-		bucket.width = 64;
-		bucket.height = 64;
+		// // create a Rectangle to logically represent the bucket
+		// bucket = new Rectangle();
+		// bucket.x = 800 / 2 - 64 / 2; // center the bucket horizontally
+		// bucket.y = 20; // bottom left corner of the bucket is 20 pixels above the
+		// bottom screen edge
+		// bucket.width = 64;
+		// bucket.height = 64;
 
 		// create the raindrops array and spawn the first raindrop
 		rainDrops = new Array<RainDrop>();
@@ -97,38 +104,45 @@ public class SimpleGame extends ApplicationAdapter {
 		// begin a new batch and draw the bucket and
 		// all drops
 		batch.begin();
-		batch.draw(balde.image, bucket.x, bucket.y);
 		for (RainDrop rainDrop : rainDrops) {
-			batch.draw(dropImage, rainDrop.rect.x, rainDrop.rect.y);
+			batch.draw(rainDrop.image, rainDrop.rect.x, rainDrop.rect.y);
 		}
-		font.draw(batch, "Pontuacao: " + pontuacao, 700, 460);
+		for (Anvil bigorna : bigornas) {
+			batch.draw(bigorna.image, bigorna.rect.x, bigorna.rect.y);
+		}
+		batch.draw(balde.image, balde.rect.x, balde.rect.y);
+		batch.draw(nuvem.image, nuvem.rect.x, nuvem.rect.y, 96, 96);
+		font.draw(batch, "Pontuacao: " + pontuacao, 10, 460);
+		font.draw(batch, "Maior Pontuacao: " + highScore, 10, 445);
 		batch.end();
 
 		// process user input
+
+		nuvem.mover();
+
 		if (Gdx.input.isTouched()) {
 			Vector3 touchPos = new Vector3();
 			touchPos.set(Gdx.input.getX(), Gdx.input.getY(), 0);
 			camera.unproject(touchPos);
-			bucket.x = touchPos.x - 64 / 2;
+			balde.rect.x = touchPos.x - 64 / 2;
 		}
 		if (Gdx.input.isKeyPressed(Input.Keys.LEFT))
-			bucket.x -= 400 * Gdx.graphics.getDeltaTime();
+			balde.rect.x -= 400 * Gdx.graphics.getDeltaTime();
 		if (Gdx.input.isKeyPressed(Input.Keys.RIGHT))
-			bucket.x += 400 * Gdx.graphics.getDeltaTime();
+			balde.rect.x += 400 * Gdx.graphics.getDeltaTime();
 
 		// make sure the bucket stays within the screen bounds
-		if (bucket.x < 0 - 64)
-			bucket.x = 800 + 64;
-		if (bucket.x > 800 + 64)
-			bucket.x = 0 - 64;
+		if (balde.rect.x < 0 - 64)
+			balde.rect.x = 800 + 64;
+		if (balde.rect.x > 800 + 64)
+			balde.rect.x = 0 - 64;
 
 		// check if we need to create a new raindrop
 		if (TimeUtils.nanoTime() - lastDropTime > 1000000000)
 			spawnRaindrop();
 
-		if (TimeUtils.nanoTime() - lastAnvilTime > 2000000000) {
+		if (TimeUtils.nanoTime() - lastAnvilTime > MathUtils.random(1.0f, 2.0f) * 1000000000)
 			spawnAnvil();
-		}
 
 		// move the raindrops, remove any that are beneath the bottom edge of
 		// the screen or that hit the bucket. In the latter case we play back
@@ -136,29 +150,41 @@ public class SimpleGame extends ApplicationAdapter {
 		for (Iterator<RainDrop> iter = rainDrops.iterator(); iter.hasNext();) {
 			RainDrop raindrop = iter.next();
 			raindrop.rect.y -= 200 * Gdx.graphics.getDeltaTime();
+
 			if (raindrop.rect.y + 64 < 0) {
 				iter.remove();
 				pontuacao--;
 			}
-			if (raindrop.rect.overlaps(balde.bucket)) {
+
+			if (raindrop.rect.overlaps(balde.rect)) {
 				dropSound.play();
 				iter.remove();
 				pontuacao++;
+			}
+
+			for (Anvil bigorna : bigornas) {
+				if (raindrop.rect.overlaps(bigorna.rect)) {
+					bigornas.removeValue(bigorna, false);
+					spawnAnvil();
+				}
 			}
 		}
 
 		for (Iterator<Anvil> iter = bigornas.iterator(); iter.hasNext();) {
 			Anvil anvil = iter.next();
-      anvil.rect.y -= 200 * Gdx.graphics.getDeltaTime();
-      if (anvil.rect.y + 64 < 0) {
-        iter.remove();
-        pontuacao--;
-      }
-      if (anvil.rect.overlaps(balde.bucket)) {
-        dropSound.play();
-        iter.remove();
-        pontuacao++;
-      }
+			anvil.rect.y -= 200 * Gdx.graphics.getDeltaTime();
+			if (anvil.rect.y + 64 < 0) {
+				iter.remove();
+			}
+			if (anvil.rect.overlaps(balde.rect)) {
+				if (pontuacao > highScore) {
+					ScoreSaver.saveHighScore(pontuacao);
+				}
+				highScore = ScoreSaver.getHighScore();
+				anvilSound.play();
+				iter.remove();
+				pontuacao = 0;
+			}
 		}
 	}
 
@@ -167,6 +193,10 @@ public class SimpleGame extends ApplicationAdapter {
 		// dispose of all the native resources
 		for (RainDrop rainDrop : rainDrops) {
 			rainDrop.image.dispose();
+		}
+
+		for (Anvil bigorna : bigornas) {
+			bigorna.image.dispose();
 		}
 
 		balde.image.dispose();

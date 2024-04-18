@@ -10,6 +10,6 @@ public class Anvil {
 
   public Anvil(Texture anvilImage) {
     this.image = anvilImage;
-    this.rect = new Rectangle(MathUtils.random(0, 800 - 64), 480, 64, 64);
+    this.rect = new Rectangle(MathUtils.random(0, 800 - 64), 500, 64, 64);
   }
 }

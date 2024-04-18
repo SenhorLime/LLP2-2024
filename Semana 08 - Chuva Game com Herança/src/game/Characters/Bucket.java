@@ -6,10 +6,10 @@ import com.badlogic.gdx.math.Rectangle;
 
 public class Bucket {
   public Texture image;
-  public Rectangle bucket;
+  public Rectangle rect;
 
   public Bucket(String path) {
     this.image = new Texture(Gdx.files.internal("assets/bucket.png"));
-    this.bucket = new Rectangle((800 / 2 - 64 / 2), 20, 64, 64);
-  }
+    this.rect = new Rectangle((800 / 2 - 64 / 2), 20, 64, 64);
+  } 
 }

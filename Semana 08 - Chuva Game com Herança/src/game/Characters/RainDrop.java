@@ -10,6 +10,6 @@ public class RainDrop {
 
   public RainDrop(Texture dropImage) {
     this.image = dropImage;
-    this.rect = new Rectangle(MathUtils.random(0, 800 - 64), 480, 64, 64);
+    this.rect = new Rectangle(MathUtils.random(0, 800 - 64), 500, 64, 64);
   }
 }
