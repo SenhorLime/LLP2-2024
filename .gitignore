@@ -26,13 +26,15 @@ replay_pid*
 # School files
 */.idea
 */.vscode
-*/.settings
-*/build
-*/bin
-*/libs
-*/.gradle
+*.settings/
+*build/
+*bin/
+*libs/
+*.gradle/
+*.gradle
 *.classpath
 *.project
+
 
 # School files
 *.zip
