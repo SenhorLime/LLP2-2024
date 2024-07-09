@@ -23,17 +23,16 @@
 hs_err_pid*
 replay_pid*
 
-# IDEs files
+# School files
 */.idea
 */.vscode
 */.settings
-*/.build
-*/.bin
+*/build
+*/bin
+*/libs
 */.gradle
 *.classpath
 *.project
-
-
 
 # School files
 *.zip
