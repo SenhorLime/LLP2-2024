@@ -45,7 +45,8 @@ public class SimpleGame extends ApplicationAdapter {
 	@Override
 	public void create() {
 		// Inicia highscore
-		highScore = InformationSaver.getHighScore();
+		// highScore = (InformationSaver.getProps("player.highscore"));
+		highScore = Integer.parseInt(InformationSaver.getProps("player.highscore"));
 
 		balde = new Bucket("assets/bucket.png", new Rectangle((800 / 2 - 64 / 2), 20, 64, 64));
 		nuvem = new Cloud("assets/cloud.png", new Rectangle((800 / 2 - 64 / 2), 390, 64, 64));
@@ -114,8 +115,11 @@ public class SimpleGame extends ApplicationAdapter {
 		}
 		batch.draw(balde.image, balde.rect.x, balde.rect.y);
 		batch.draw(nuvem.image, nuvem.rect.x, nuvem.rect.y, 96, 96);
-		font.draw(batch, "Pontuacao: " + pontuacao, 10, 460);
-		font.draw(batch, "Maior Pontuacao: " + highScore, 10, 445);
+
+		font.draw(batch, "Vidas: " + balde.getVidas(), 10, 450);
+		font.draw(batch, "Pontuacao: " + pontuacao, 10, 465);
+		font.draw(batch, "Maior Pontuacao: " + highScore, 10, 480);
+
 		batch.end();
 
 		// process user input
@@ -164,22 +168,38 @@ public class SimpleGame extends ApplicationAdapter {
 			}
 			if (anvil.rect.overlaps(balde.rect)) {
 				if (pontuacao > highScore) {
-					InformationSaver.saveHighScore(pontuacao);
+					InformationSaver.saveProps("player.highscore", String.valueOf(pontuacao));
 				}
-				highScore = InformationSaver.getHighScore();
+				balde.perderVidas();
+				highScore = Integer.parseInt(InformationSaver.getProps("player.highscore"));
 				anvilSound.play();
 				iter.remove();
 				pontuacao = 0;
+
+				if (balde.getVidas() <= 0) {
+					Gdx.app.exit();
+					System.exit(-1);
+				}
 			}
 		}
 	}
 
+	public void saveInformations() {
+		if (balde.getVidas() > 0) {
+			InformationSaver.saveProps("player.life", String.valueOf(balde.getVidas()));
+			InformationSaver.saveProps("player.position", balde.toString());
+			InformationSaver.saveProps("player.score", String.valueOf(pontuacao));
+		}
+
+		if (pontuacao > highScore) {
+			InformationSaver.saveProps("player.highscore", String.valueOf(pontuacao));
+		}
+	}
+	
 	@Override
 	public void dispose() {
-		if (pontuacao > highScore) {
-			InformationSaver.saveHighScore(pontuacao);
-		}
-		
+		saveInformations();
+
 		// dispose of all the native resources
 		for (RainDrop rainDrop : rainDrops) {
 			rainDrop.image.dispose();

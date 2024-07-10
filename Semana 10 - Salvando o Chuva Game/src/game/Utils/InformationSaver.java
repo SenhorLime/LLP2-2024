@@ -29,12 +29,12 @@ public class InformationSaver {
     }
   }
 
-  public static int getHighScore() {
-    return Integer.parseInt(gameProperties.getProperty("player.highscore"));
+  public static String getProps(String key) {
+    return gameProperties.getProperty(key);
   }
 
-  public static void saveHighScore(int score) {
-    gameProperties.setProperty("player.highscore", String.valueOf(score));
+  public static void saveProps(String key, String value) {
+    gameProperties.setProperty(key, value);
     setProps();
   }
 }

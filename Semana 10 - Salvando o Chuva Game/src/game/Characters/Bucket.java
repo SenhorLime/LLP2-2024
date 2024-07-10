@@ -5,10 +5,25 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
+import game.Utils.InformationSaver;
+
 public class Bucket extends Movable {
+  private int vidas = Integer.parseInt(InformationSaver.getProps("player.life"));
 
   public Bucket(String path, Rectangle rect) {
     super(path, rect);
+  }
+
+  public void setVidas(int vidas) {
+    this.vidas = vidas;
+  }
+
+  public int getVidas() {
+    return vidas;
+  }
+
+  public void perderVidas() {
+    vidas--;
   }
 
   public void mover() {
@@ -35,5 +50,10 @@ public class Bucket extends Movable {
     if (rect.x > 800 + 64) {
       rect.x = 0 - 64;
     }
+  }
+
+  @Override
+  public String toString() {
+    return rect.x + "," + rect.y;
   }
 }
