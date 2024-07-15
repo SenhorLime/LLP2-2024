@@ -1,232 +1,250 @@
 package game;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
-import game.Characters.*;
-import game.Utils.*;
+import game.Characters.Bucket;
+import game.Characters.Cloud;
+import game.Characters.Dropable;
+import game.Characters.Anvil;
+import game.Characters.RainDrop;
+import game.Managers.ResourceManager;
+import game.Utils.InformationSaver;
 
 public class SimpleGame extends ApplicationAdapter {
-	private Bucket balde;
-	private Cloud nuvem;
-	private Array<Anvil> bigornas = new Array<Anvil>();
-	private Array<RainDrop> rainDrops = new Array<RainDrop>();
+  // Elementos do jogo (jogador, npc e inimigo)
+  private Bucket bucket;
+  private Cloud cloud;
+  private ArrayList<Dropable> dropableObjects = new ArrayList<Dropable>();
 
-	private Texture dropImage;
-	private Texture anvilImage;
-	// private Texture bucketImage;
-	private Sound dropSound;
-	private Sound anvilSound;
-	private Music rainMusic;
-	private SpriteBatch batch;
-	private OrthographicCamera camera;
-	// private Rectangle bucket;
-	// private Array<Rectangle> raindrops;
-	private long lastDropTime;
-	private long lastAnvilTime;
+  // Variaveis de controle para criacao de novos inimigos
+  private long lastRaindropTime;
+  private long lastAnvilTime;
 
-	private BitmapFont font;
-	int pontuacao = 0;
-	private int highScore;
+  // Classes singleton que acessam os mesmo elementos em qualquer parte do jogo
+  private ResourceManager resources = ResourceManager.getInstance();
+  private InformationSaver gameInformation = InformationSaver.getInstance();
 
-	@Override
-	public void create() {
-		// Inicia highscore
-		// highScore = (InformationSaver.getProps("player.highscore"));
-		highScore = Integer.parseInt(InformationSaver.getProps("player.highscore"));
+  // Variaveis exclusivas do SimpleGame
+  private BitmapFont font;
+  private SpriteBatch batch;
+  private OrthographicCamera camera;
 
-		balde = new Bucket("assets/bucket.png", new Rectangle((800 / 2 - 64 / 2), 20, 64, 64));
-		nuvem = new Cloud("assets/cloud.png", new Rectangle((800 / 2 - 64 / 2), 390, 64, 64));
+  // Variavel que armazena a maior pontução do SimpleGame
+  private int gameHighScore = Integer.parseInt(gameInformation.getProps("game.highScore"));
 
-		// load the images for the droplet and the bucket, 64x64 pixels each
-		dropImage = new Texture((Gdx.files.internal("assets/droplet.png")));
-		anvilImage = new Texture((Gdx.files.internal("assets/anvil.png")));
+  private void loadResources() {
+    // Loading all used textures to Resource Manager
+    resources.addTexture("bucket", "assets/images/bucket.png");
+    resources.addTexture("cloud", "assets/images/cloud.png");
+    resources.addTexture("raindrop", "assets/images/droplet.png");
+    resources.addTexture("anvil", "assets/images/anvil.png");
 
-		font = new BitmapFont(); // use libGDX's default Arial font
+    // Loading all used sounds to Resounce Manager
+    resources.addSound("drop", "assets/sounds/drop.wav");
+    resources.addSound("anvil", "assets/sounds/anvilSound.wav");
 
-		// load the drop sound effect and the rain background "music"
-		dropSound = Gdx.audio.newSound(Gdx.files.internal("assets/drop.wav"));
-		anvilSound = Gdx.audio.newSound(Gdx.files.internal("assets/anvilSound.wav"));
-		rainMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/rain.mp3"));
+    // Loading all used music to Resource Manager
+    resources.addMusic("rain", "assets/sounds/rain.mp3");
+  }
 
-		// start the playback of the background music immediately
-		rainMusic.setLooping(true);
-		rainMusic.play();
+  private void loadCharacthers() {
+    font = new BitmapFont();
 
-		// create the camera and the SpriteBatch
-		camera = new OrthographicCamera();
-		camera.setToOrtho(false, 800, 480);
-		batch = new SpriteBatch();
+    bucket = new Bucket("bucket");
+    cloud = new Cloud("cloud");
 
-		// // create a Rectangle to logically represent the bucket
-		// bucket = new Rectangle();
-		// bucket.x = 800 / 2 - 64 / 2; // center the bucket horizontally
-		// bucket.y = 20; // bottom left corner of the bucket is 20 pixels above the
-		// bottom screen edge
-		// bucket.width = 64;
-		// bucket.height = 64;
+    createDropableObject();
+  }
 
-		// create the raindrops array and spawn the first raindrop
-		rainDrops = new Array<RainDrop>();
-		spawnRaindrop();
+  private void createDropableObject() {
+    if (Boolean.parseBoolean(gameInformation.getProps("game.isValid"))) {
+      for (String raindropInfo : gameInformation.getProps("object.raindrops.position").split("/")) {
+        ArrayList<Float> raindropPosition = new ArrayList<Float>();
 
-		bigornas = new Array<Anvil>();
-		spawnAnvil();
-	}
+        for (String stringToFloat : raindropInfo.split(";")) {
+          raindropPosition.add(Float.parseFloat(stringToFloat));
+        }
 
-	@Override
-	public void render() {
-		// clear the screen with a dark blue color. The
-		// arguments to clear are the red, green
-		// blue and alpha component in the range [0,1]
-		// of the color to be used to clear the screen.
-		// ScreenUtils.clear(0, 0, 0.2f, 1);
-		Gdx.gl.glClearColor(0, 0.3f, 0.2f, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        dropableObjects.add(new RainDrop("raindrop", raindropPosition.get(0), raindropPosition.get(1)));
+        lastRaindropTime = TimeUtils.nanoTime();
+      }
 
-		// tell the camera to update its matrices.
-		camera.update();
+      for (String anvilInfo : gameInformation.getProps("object.anvils.position").split("/")) {
+        ArrayList<Float> anvilPosition = new ArrayList<Float>();
 
-		// tell the SpriteBatch to render in the
-		// coordinate system specified by the camera.
-		batch.setProjectionMatrix(camera.combined);
+        for (String stringToFloat : anvilInfo.split(";")) {
+          anvilPosition.add(Float.parseFloat(stringToFloat));
+        }
 
-		// begin a new batch and draw the bucket and
-		// all drops
-		batch.begin();
-		for (RainDrop rainDrop : rainDrops) {
-			batch.draw(rainDrop.image, rainDrop.rect.x, rainDrop.rect.y);
-		}
-		for (Anvil bigorna : bigornas) {
-			batch.draw(bigorna.image, bigorna.rect.x, bigorna.rect.y);
-		}
-		batch.draw(balde.image, balde.rect.x, balde.rect.y);
-		batch.draw(nuvem.image, nuvem.rect.x, nuvem.rect.y, 96, 96);
+        dropableObjects.add(new Anvil("anvil", anvilPosition.get(0), anvilPosition.get(1)));
+        lastAnvilTime = TimeUtils.nanoTime();
+      }
+    }
+  }
 
-		font.draw(batch, "Vidas: " + balde.getVidas(), 10, 450);
-		font.draw(batch, "Pontuacao: " + pontuacao, 10, 465);
-		font.draw(batch, "Maior Pontuacao: " + highScore, 10, 480);
+  private void spawnDropableObject() {
+    if (TimeUtils.nanoTime() - lastRaindropTime > 1000000000) {
+      dropableObjects.add(new RainDrop("raindrop"));
+      lastRaindropTime = TimeUtils.nanoTime();
+    }
 
-		batch.end();
+    if (TimeUtils.nanoTime() - lastAnvilTime > MathUtils.random(1.0f, 2.0f) * 1000000000) {
+      dropableObjects.add(new Anvil("anvil"));
+      lastAnvilTime = TimeUtils.nanoTime();
+    }
+  }
 
-		// process user input
+  private void drawObjects() {
+    // Desenha o balde e a nuvem na tela
+    bucket.renderObject(batch);
+    cloud.renderObject(batch);
 
-		nuvem.mover();
-		balde.mover();
+    // Percorre todos os elementos dropaveis e os desenha na tela
+    for (Dropable dropable : dropableObjects) {
+      dropable.renderObject(batch);
+    }
 
-		// check if we need to create a new raindrop
-		if (TimeUtils.nanoTime() - lastDropTime > 1000000000)
-			spawnRaindrop();
+    // Desenha os texto de informações na tela
+    font.draw(batch, "Vidas: " + bucket.getVidas(), 10, 465);
+    font.draw(batch, "Pontuacao: " + bucket.getPontos(), 10, 450);
+    font.draw(batch, "Maior pontuação: " + gameHighScore, 10, 435);
+  }
 
-		if (TimeUtils.nanoTime() - lastAnvilTime > MathUtils.random(1.0f, 2.0f) * 1000000000)
-			spawnAnvil();
+  private void moveObjects() {
+    bucket.moveObject();
+    cloud.moveObject();
 
-		// move the raindrops, remove any that are beneath the bottom edge of
-		// the screen or that hit the bucket. In the latter case we play back
-		// a sound effect as well.
-		for (Iterator<RainDrop> iter = rainDrops.iterator(); iter.hasNext();) {
-			RainDrop raindrop = iter.next();
-			raindrop.rect.y -= 200 * Gdx.graphics.getDeltaTime();
+    for (Dropable dropable : dropableObjects) {
+      dropable.moveObject();
+    }
+  }
 
-			if (raindrop.rect.y + 64 < 0) {
-				iter.remove();
-				pontuacao--;
-			}
+  @Override
+  public void create() {
+    // carregando os texturas
+    loadResources();
 
-			if (raindrop.rect.overlaps(balde.rect)) {
-				dropSound.play();
-				iter.remove();
-				pontuacao++;
-			}
+    // carregando os personagens
+    loadCharacthers();
 
-			for (Anvil bigorna : bigornas) {
-				if (raindrop.rect.overlaps(bigorna.rect)) {
-					bigornas.removeValue(bigorna, false);
-					spawnAnvil();
-				}
-			}
-		}
+    // create the camera and the SpriteBatch
+    camera = new OrthographicCamera();
+    camera.setToOrtho(false, 800, 480);
+    batch = new SpriteBatch();
 
-		for (Iterator<Anvil> iter = bigornas.iterator(); iter.hasNext();) {
-			Anvil anvil = iter.next();
-			anvil.rect.y -= 200 * Gdx.graphics.getDeltaTime();
-			if (anvil.rect.y + 64 < 0) {
-				iter.remove();
-			}
-			if (anvil.rect.overlaps(balde.rect)) {
-				if (pontuacao > highScore) {
-					InformationSaver.saveProps("player.highscore", String.valueOf(pontuacao));
-				}
-				balde.perderVidas();
-				highScore = Integer.parseInt(InformationSaver.getProps("player.highscore"));
-				anvilSound.play();
-				iter.remove();
-				pontuacao = 0;
+    // Toca a musica de fundo em loop depois de ser carregada
+    resources.getMusic("rain").setLooping(true);
+    resources.getMusic("rain").play();
+  }
 
-				if (balde.getVidas() <= 0) {
-					Gdx.app.exit();
-					System.exit(-1);
-				}
-			}
-		}
-	}
+  @Override
+  public void render() {
+    Gdx.gl.glClearColor(0, 0.3f, 0.2f, 1);
+    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-	public void saveInformations() {
-		if (balde.getVidas() > 0) {
-			InformationSaver.saveProps("player.life", String.valueOf(balde.getVidas()));
-			InformationSaver.saveProps("player.position", balde.toString());
-			InformationSaver.saveProps("player.score", String.valueOf(pontuacao));
-		}
+    // tell the camera to update its matrices
+    camera.update();
 
-		if (pontuacao > highScore) {
-			InformationSaver.saveProps("player.highscore", String.valueOf(pontuacao));
-		}
-	}
-	
-	@Override
-	public void dispose() {
-		saveInformations();
+    // tell the SpriteBatch to render in the
+    // coordinate system specified by the camera.
+    batch.setProjectionMatrix(camera.combined);
 
-		// dispose of all the native resources
-		for (RainDrop rainDrop : rainDrops) {
-			rainDrop.image.dispose();
-		}
+    // begin the batch and draw all elements
+    batch.begin();
+    drawObjects();
+    batch.end();
 
-		for (Anvil bigorna : bigornas) {
-			bigorna.image.dispose();
-		}
+    // chamando a função que move os objetos na tela
+    moveObjects();
 
-		balde.image.dispose();
+    // chamando a função que gera novos objetos na tela
+    spawnDropableObject();
 
-		dropImage.dispose();
-		dropSound.dispose();
-		rainMusic.dispose();
-		batch.dispose();
-	}
+    // O for abaixo percorre o vetor polimorfico que contem todos os elementos
+    // dropaveis
+    for (Iterator<Dropable> iter = dropableObjects.iterator(); iter.hasNext();) {
+      Dropable dropable = iter.next();
 
-	private void spawnAnvil() {
-		Anvil anvil = new Anvil(anvilImage);
-		bigornas.add(anvil);
-		lastAnvilTime = TimeUtils.nanoTime();
-	}
+      // Remove o objeto do vetor caso ele saia para fora da tela
+      if (dropable.isOutOfScreen()) {
+        iter.remove();
+      }
 
-	private void spawnRaindrop() {
-		RainDrop raindrop = new RainDrop(dropImage);
-		rainDrops.add(raindrop);
-		lastDropTime = TimeUtils.nanoTime();
-	}
+      // Verifica se o objeto colidiu com o balde
+      if (dropable.isColliding(bucket.getRect())) {
 
+        // Verifica se o objeto colidido é uma gota e chama as devidas funções se
+        // verdadeiro
+        if (dropable instanceof RainDrop) {
+          resources.getSound("drop").play();
+
+          bucket.ganharPontos();
+          iter.remove();
+
+          if (bucket.getPontos() % 20 == 0) {
+            bucket.ganharVidas();
+          }
+
+          if (bucket.getPontos() > gameHighScore) {
+            gameHighScore = bucket.getPontos();
+            gameInformation.saveProps("game.highScore", String.valueOf(bucket.getPontos()));
+          }
+        }
+
+        // Verifica se o objeto colidido é uma bigorna e chama as devidas funções se
+        // verdadeiro
+        if (dropable instanceof Anvil) {
+          resources.getSound("anvil").play();
+
+          bucket.perderVidas();
+          iter.remove();
+
+          if (bucket.getVidas() <= 0) {
+            Gdx.app.exit();
+
+            dispose();
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    if (bucket.getVidas() > 0) {
+      gameInformation.saveProps("game.isValid", "true");
+    } else {
+      gameInformation.saveProps("game.isValid", "false");
+    }
+
+    bucket.dispose();
+    cloud.dispose();
+
+    StringBuilder raindropsPositions = new StringBuilder();
+    StringBuilder anvilsPositions = new StringBuilder();
+    for (Dropable dropable : dropableObjects) {
+      if (dropable instanceof RainDrop) {
+        raindropsPositions.append(dropable.toString() + "/");
+      }
+
+      if (dropable instanceof Anvil) {
+        anvilsPositions.append(dropable.toString() + "/");
+      }
+    }
+    gameInformation.saveProps("object.raindrops.position", raindropsPositions.toString());
+    gameInformation.saveProps("object.anvils.position", anvilsPositions.toString());
+
+    font.dispose();
+    batch.dispose();
+  }
 }

@@ -3,12 +3,14 @@ package game.Managers;
 import java.util.HashMap;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 
 public class ResourceManager {
   private HashMap<String, Texture> textureMap = new HashMap<String, Texture>();
   private HashMap<String, Sound> soundMap = new HashMap<String, Sound>();
+  private HashMap<String, Music> musicMap = new HashMap<String, Music>();
 
   private static ResourceManager INSTANCE;
 
@@ -21,6 +23,14 @@ public class ResourceManager {
     }
 
     return INSTANCE;
+  }
+
+  public void addMusic(String name, String path) {
+    addMusic(name, Gdx.audio.newMusic(Gdx.files.internal(path)));
+  }
+
+  public void addMusic(String name, Music music) {
+    this.musicMap.put(name, music);
   }
 
   public void addSound(String name, String path) {
@@ -45,5 +55,9 @@ public class ResourceManager {
 
   public Sound getSound(String name) {
     return this.soundMap.get(name);
+  }
+
+  public Music getMusic(String name) {
+    return this.musicMap.get(name);
   }
 }

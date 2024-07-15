@@ -6,35 +6,43 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class InformationSaver {
-  private static Properties gameProperties = getProps();
+  private static InformationSaver INSTANCE;
+  private Properties gameProperties = new Properties();
 
-  private static Properties getProps() {
-    Properties props = new Properties();
+  private InformationSaver() {
+    // Abrindo o arquivo no modo de leitura e armazendo o buffer
     try {
-      FileInputStream file = new FileInputStream("assets/gameData.properties");
-      props.load(file);
+      FileInputStream fileInputStream = new FileInputStream("assets/data/gameData.properties");
+      gameProperties.load(fileInputStream);
     } catch (IOException e) {
       e.printStackTrace();
-      System.err.println("Falha ao abrir o arquivo: " + e.getMessage());
+      System.err.println("Falha ao abrir o arquivo no modo de leitura: " + e.getMessage());
     }
-    return props;
   }
 
-  private static void setProps() {
+  public static InformationSaver getInstance() {
+    if (INSTANCE == null) {
+      INSTANCE = new InformationSaver();
+    }
+
+    return INSTANCE;
+  }
+  
+  public void saveProps(String key, String value) {
+    // Salvando as properties dentro da variavel
+    gameProperties.setProperty(key, value);
+
+    // Escrevendo os valores recebidos pela função dentro do arquivo de properties
     try {
-      gameProperties.store(new FileOutputStream("assets/gameData.properties"), "");
+      FileOutputStream fileOutputStream = new FileOutputStream("assets/data/gameData.properties");
+      gameProperties.store(fileOutputStream, "");
     } catch (IOException e) {
       e.printStackTrace();
       System.err.println("Falha ao salvar informações: " + e.getMessage());
     }
   }
 
-  public static String getProps(String key) {
+  public String getProps(String key) {
     return gameProperties.getProperty(key);
-  }
-
-  public static void saveProps(String key, String value) {
-    gameProperties.setProperty(key, value);
-    setProps();
   }
 }

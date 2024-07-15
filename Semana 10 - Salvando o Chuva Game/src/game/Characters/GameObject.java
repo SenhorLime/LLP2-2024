@@ -5,11 +5,13 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 
 import game.Managers.ResourceManager;
+import game.Utils.InformationSaver;
 
 public class GameObject {
   protected ResourceManager resourcesLoader = ResourceManager.getInstance();
+  protected InformationSaver gameInformation = InformationSaver.getInstance();
   protected Texture texture;
-  protected Rectangle rectangle;
+  protected Rectangle rectangle = new Rectangle();
 
   public GameObject(String textureName) {
     this.texture = resourcesLoader.getTexture(textureName);
@@ -28,7 +30,7 @@ public class GameObject {
   }
 
   public void renderObject(SpriteBatch screen) {
-    screen.draw(texture, rectangle.x, rectangle.y);
+    screen.draw(this.texture, this.rectangle.x, this.rectangle.y);
   }
 
   public void setPosition(float x, float y) {
@@ -42,6 +44,6 @@ public class GameObject {
   
   @Override
   public String toString() {
-    return rectangle.x + ";" + rectangle.y;
+    return this.rectangle.x + ";" + this.rectangle.y;
   }
 }
