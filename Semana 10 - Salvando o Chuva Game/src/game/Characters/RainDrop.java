@@ -1,10 +1,7 @@
 package game.Characters;
 
-import com.badlogic.gdx.graphics.Texture;
-
-public class RainDrop extends Movable {
-
-  public RainDrop(Texture dropImage) {
-    super(dropImage);
+public class RainDrop extends Dropable {
+  public RainDrop(String textureName) {
+    super(textureName);
   }
 }

@@ -1,10 +1,8 @@
 package game.Characters;
 
-import com.badlogic.gdx.graphics.Texture;
+public class Anvil extends Dropable {
 
-public class Anvil extends Movable {
-
-  public Anvil(Texture anvilImage) {
-    super(anvilImage);
+  public Anvil(String textureName) {
+    super(textureName);
   }
 }
