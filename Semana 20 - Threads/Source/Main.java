@@ -3,10 +3,10 @@ package Source;
 import java.util.ArrayList;
 
 public class Main {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws InterruptedException {
     ListadorDeArquivos listadorDeArquivos = new ListadorDeArquivos();
     ArrayList<String> fileList = listadorDeArquivos.listarArquivosNoDiretorio("Dados", "srt");
-    
+
     // Questão A
     System.out.println("Questão A");
     ThreadContarPalavras contarPalavras = new ThreadContarPalavras("Dados/" + fileList.get(0), "Bart");
